@@ -1,18 +1,64 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <div v-infinite-scroll="loadMore">
+      <h2 v-for="(post, index) in posts.edges" :key="index">{{post.node.title}}</h2>
+    </div>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import PaginatedPostsQuery from "./graphql/paginatedPosts.gql";
+
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
+  },
+  data() {
+    return {
+      after: null,
+      first: 5,
+      posts: {
+        pageInfo: {},
+        edges: []
+      }
+    };
+  },
+  apollo: {
+    posts: {
+      query: PaginatedPostsQuery,
+      variables() {
+        return {
+          after: this.after,
+          first: this.first
+        };
+      },
+    }
+  },
+  methods: {
+    loadMore() {
+
+      this.$apollo.queries.posts.fetchMore({
+        variables: {
+          after: this.posts.pageInfo.endCursor,
+          first: this.first
+        },
+
+        updateQuery: (previousResult, { fetchMoreResult }) => {
+          
+          return {
+            posts: {
+              __typename: previousResult.posts.__typename,
+              pageInfo: fetchMoreResult.posts.pageInfo,
+              edges:  [...previousResult.posts.edges, ...fetchMoreResult.posts.edges],
+            }
+          }
+        } 
+      })
+    },
+
   }
+
 }
 </script>
 
@@ -21,7 +67,6 @@ export default {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
   color: #2c3e50;
   margin-top: 60px;
 }

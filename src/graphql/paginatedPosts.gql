@@ -1,0 +1,16 @@
+query LOAD_POSTS($first: Int, $after: String) {
+  posts(first: $first, after: $after) {
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    edges {
+      cursor
+      node {
+        id
+        title
+        date
+      }
+    }
+  }
+}
